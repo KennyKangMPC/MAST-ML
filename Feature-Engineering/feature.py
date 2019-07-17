@@ -203,13 +203,12 @@ class MASTMLFeatureSelector(object):
         """
         A helper method that is used to determine whether the higher score is better or worse
         """
-        result1 = self.scorer([0],[1])
-        result2 = self.scorer([1],[1])
+        result1 = self.scorer([0], [1])
+        result2 = self.scorer([1], [1])
 
         if result1 > result2:
             return False
         return True
-    
 
     def before_forward_selection(self, X, y, groups, n):
         """
@@ -230,19 +229,21 @@ class MASTMLFeatureSelector(object):
 
             x = X[list(token)]
 
+            scores = list()
             for trains, tests in self.cv.split(x, y, groups):
                 self.estimator.fit(x[trains], y[trains])
                 predictions = self.estimator.predict(x[tests])
-                score = self.scorer(y[tests], predictions)
-                if higher_better:
-                    if score > top_score:
-                        top_score = score
-                        best_combo = token
-                else:
-                    if score < top_score:
-                        top_score = score
-                        best_combo = token
+                scores.append(self.scorer(y[tests], predictions))
+            score = np.mean(scores)
 
+            if higher_better:
+                if score > top_score:
+                    top_score = score
+                    best_combo = token
+            else:
+                if score < top_score:
+                    top_score = score
+                    best_combo = token
         return list(best_combo)
 
     def fit(self, X, y, Xgroups=None):
@@ -252,9 +253,8 @@ class MASTMLFeatureSelector(object):
             Xgroups = pd.DataFrame(xgroups)
 
         n = 2
-        first_n_pairs_features = self.before_forward_selection(X=X, y=y, groups=Xgroups, n=n)
-
-
+        first_n_pairs_features = self.before_forward_selection(
+            X=X, y=y, groups=Xgroups, n=n)
 
         X.drop(first_n_pairs_features, inplace=True, axis=1)
 
@@ -349,10 +349,10 @@ class MASTMLFeatureSelector(object):
                 if kk == 'std_score':
                     feature_std_scores.append(vv)
 
-        
         # sorting from best to worst
-        if higher_better: 
-            feature_avg_scores_sorted = sorted(feature_avg_scores, reverse = True)
+        if higher_better:
+            feature_avg_scores_sorted = sorted(
+                feature_avg_scores, reverse=True)
         else:
             feature_avg_scores_sorted = sorted(feature_avg_scores)
 
